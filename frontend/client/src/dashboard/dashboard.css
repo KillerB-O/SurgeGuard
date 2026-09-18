@@ -841,3 +841,102 @@
 .sg-dashboard .plan-card-cta { display: block; text-align: center; text-decoration: none; }
 
 .sg-dashboard .plan-card-lost { margin-top: 4px; font-size: 0.75rem; color: var(--ink-faint); }
+
+/* ── Recovery chat panel ───────────────────────────────────────────── */
+
+.sg-dashboard .chat-transcript {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 4px;
+  margin-bottom: 16px;
+}
+
+.sg-dashboard .chat-bubble {
+  max-width: 80%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.sg-dashboard .chat-bubble.user {
+  align-self: flex-end;
+  background: var(--accent-dim);
+  color: var(--ink);
+}
+
+.sg-dashboard .chat-bubble.assistant {
+  align-self: flex-start;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--ink);
+}
+
+.sg-dashboard .chat-bubble.pending { color: var(--ink-muted); font-style: italic; }
+
+.sg-dashboard .chat-bubble.error { border-color: var(--breached); color: var(--breached); }
+
+/* Streamdown's markdown output loses all spacing under this file's global
+   `margin: 0` reset -- restore it explicitly rather than assume Streamdown's
+   own defaults resolve here. */
+.sg-dashboard .chat-bubble.assistant > * + * { margin-top: 8px; }
+.sg-dashboard .chat-bubble.assistant ul,
+.sg-dashboard .chat-bubble.assistant ol { padding-left: 1.25em; }
+.sg-dashboard .chat-bubble.assistant li + li { margin-top: 4px; }
+.sg-dashboard .chat-bubble.assistant code {
+  background: var(--bg-card-hover);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 0.8125em;
+}
+.sg-dashboard .chat-bubble.assistant pre {
+  background: var(--bg-card-hover);
+  border-radius: 6px;
+  padding: 10px;
+  overflow-x: auto;
+}
+
+.sg-dashboard .chat-stale-notice { margin-top: 8px; font-size: 0.8125rem; color: var(--at-risk); }
+
+.sg-dashboard .chat-input-row { display: flex; gap: 10px; align-items: flex-end; }
+
+.sg-dashboard .chat-input-row textarea {
+  flex: 1;
+  font: inherit;
+  resize: none;
+  min-height: 44px;
+  max-height: 140px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.sg-dashboard .chat-input-row textarea:focus {
+  border-color: var(--accent);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+.sg-dashboard .chat-input-row .btn {
+  padding: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sg-dashboard .chat-counter {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.6875rem;
+  color: var(--ink-faint);
+  text-align: right;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.sg-dashboard .spin { animation: spin 0.8s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .sg-dashboard .spin { animation: none; } }

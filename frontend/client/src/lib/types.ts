@@ -322,6 +322,38 @@ export interface RecoveryActionResponse {
   updated_at: string;
 }
 
+// --- Recovery chat ----------------------------------------------------------
+
+/** POST /api/recovery-chat request body. */
+export interface RecoveryChatRequest {
+  plan_id: string;
+  question: string;
+}
+
+/**
+ * POST /api/recovery-chat response. `grounded` is currently always true --
+ * the backend only answers from the plan's own data, never a free-floating
+ * guess -- so the frontend carries it rather than branching on it.
+ */
+export interface RecoveryChatResponse {
+  plan_id: string;
+  answer: string;
+  grounded: boolean;
+}
+
+/**
+ * One turn in a per-plan transcript. Purely client-side: the backend is
+ * stateless and keeps no chat history, so this is the only record of the
+ * conversation and it does not survive a page refresh.
+ */
+export interface ChatMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  /** Set on an assistant turn that failed instead of answering. */
+  error?: string;
+}
+
 /** Operator controls for driving the demo. Absent in a deployment without a
  * simulator to drive, in which case `enabled` is false. */
 export interface DemoStatus {

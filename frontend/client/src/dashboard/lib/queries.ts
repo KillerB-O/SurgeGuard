@@ -5,13 +5,14 @@
  * so navigating between pages reuses cached data instead of blanking panels.
  */
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 import type { ActionStatus, OrderStatus } from "@/lib/types";
 
 import {
   FACILITY_ID,
   MAX_PAGE_SIZE,
+  askRecoveryChat,
   getAtRiskOrders,
   getDashboard,
   getDemoStatus,
@@ -84,6 +85,25 @@ export function useRecoveryPlans(facilityId: string = FACILITY_ID) {
     queryKey: keys.plans(facilityId),
     queryFn: () => getRecoveryPlans(facilityId),
     staleTime: 10_000,
+  });
+}
+
+/**
+ * Grounded Q&A against one recovery plan. Stateless on the backend, so this
+ * is a bare mutation with no query key: there is nothing to cache or
+ * invalidate, and the visible transcript is owned entirely by the caller.
+ */
+export function useRecoveryChat() {
+  return useMutation({
+    mutationFn: ({
+      planId,
+      question,
+      facilityId,
+    }: {
+      planId: string;
+      question: string;
+      facilityId?: string;
+    }) => askRecoveryChat(planId, question, facilityId),
   });
 }
 

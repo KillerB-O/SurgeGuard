@@ -2,8 +2,9 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
-import { approveRecoveryPlan } from "@/lib/api";
+import { FACILITY_ID, approveRecoveryPlan } from "@/lib/api";
 import { RiskBadge } from "../components/Badges";
+import { RecoveryChatPanel } from "../components/RecoveryChatPanel";
 import { SummaryDelta } from "../components/SummaryDelta";
 import { Empty, Failed, Loading } from "../components/States";
 import { rememberAction } from "../lib/actionLog";
@@ -120,6 +121,8 @@ export function PlanDetail() {
           />
         )}
       </section>
+
+      <RecoveryChatPanel planId={plan.plan_id} facilityId={FACILITY_ID} />
 
       <section className="panel">
         <div className="panel-title">
