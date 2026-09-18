@@ -14,7 +14,7 @@ def upgrade() -> None:
     """Reject stored statuses the MVP lifecycle cannot produce.
 
     RECEIVED, CANCELLED, and DELAYED stay out of the constraint: they exist in
-    the enum but have no defined transition semantics (docs/10 section 9).
+    the enum but have no defined transition semantics.
     """
     op.execute(
         """
