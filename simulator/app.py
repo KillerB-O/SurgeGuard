@@ -41,8 +41,8 @@ class TickRequest(BaseModel):
     `at` is a second, independent way to pin the tick: an absolute simulated
     instant rather than an offset from wherever `now()` happens to land when
     the request arrives. It wins over `hours_ago` when given. The backend is
-    the one that knows the simulated instant (see `docs/07 section 13`); the
-    simulator itself still never reads a clock -- it is only ever told.
+    the one that knows the simulated instant; the simulator itself still
+    never reads a clock -- it is only ever told.
 
     `sim_hours_elapsed` and `duration_hours` are the other half of that: the
     backend also knows where on the demand wave this tick sits and how much

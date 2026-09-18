@@ -359,7 +359,7 @@ def test_setting_capacity_does_not_claim_it_is_already_achieved():
     """Approving a capacity lever must not manufacture its own evidence.
 
     The snapshot published on a capacity change exists to close the approval
-    loop (docs/07 section 11), and it still does. What it must not do is assert
+    loop, and it still does. What it must not do is assert
     the new rate as work already completed, because that makes a plan's
     projected `breaches_avoided` come true by construction.
     """

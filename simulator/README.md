@@ -3,11 +3,6 @@
 The simulator generates canonical commerce and fulfillment events. It never
 writes to PostgreSQL; events are sent through the configured n8n gateway.
 
-Source of truth:
-- `../docs/07_SIMULATOR_SOURCE_OF_TRUTH.md`
-- `../docs/08_WHAT_IF_RECOVERY_AND_N8N.md`
-- `../docs/04_EVENT_INGESTION_CONTRACTS.md`
-
 ## Run locally
 
 ```powershell
