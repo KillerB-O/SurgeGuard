@@ -1,7 +1,0 @@
-{
-  "threshold": 0.04,
-  "label": "Amazon Late Shipment Rate ceiling for seller-fulfilled orders",
-  "source": "https://feedvisor.com/university/late-shipment-rate/",
-  "note": "Published marketplace limit, not a figure invented for this demo. Breaching it costs listing visibility and Buy Box eligibility rather than money directly, which is why inaction is costed as a rate rather than as currency. On-Time Delivery Rate carries a separate 90% floor; only the dispatch-side metric is modelled here because dispatch is what this product predicts. Measured over a trailing window matching Amazon's own methodology (about 10 days), not since the facility's first order: an all-time denominator would make the rate insensitive to recent history.",
-  "window_days": 10
-}
