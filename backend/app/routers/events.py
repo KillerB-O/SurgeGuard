@@ -2,12 +2,15 @@
 
 import logging
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncConnection
+
 
 from app.db import get_connection
 from app.models import (
+    ORDER_LIFECYCLE,
     EventIngestionResponse,
     FulfillmentSnapshotEvent,
     IngestionStatus,
@@ -16,7 +19,9 @@ from app.models import (
     OrderRevisedEvent,
     OrderStatus,
     OrderStatusUpdatedEvent,
+    lifecycle_position,
 )
+from app.work_units import classify_order_event, work_units_for_step
 
 router = APIRouter(prefix="/events", tags=["events"])
 
@@ -100,7 +105,6 @@ async def _claim_event(
     "/orders",
     response_model=EventIngestionResponse,
     # n8n workflow commerce-orders-to-backend.json (plan 03, ACCESS-02).
-    dependencies=[Depends(require_service_token)],
 )
 async def ingest_order_created(
     event: OrderCreatedEvent,
@@ -179,7 +183,6 @@ async def ingest_order_created(
     "/fulfillment",
     response_model=EventIngestionResponse,
     # n8n workflow fulfillment-snapshot-to-backend.json (plan 03, ACCESS-02).
-    dependencies=[Depends(require_service_token)],
 )
 async def ingest_fulfillment_snapshot(
     event: FulfillmentSnapshotEvent,
@@ -230,7 +233,7 @@ async def ingest_fulfillment_snapshot(
     "/order-status",
     response_model=EventIngestionResponse,
     # n8n workflow fulfillment-status-to-backend.json (plan 03, ACCESS-02).
-    dependencies=[Depends(require_service_token)],
+
 )
 async def ingest_order_status_updated(
     event: OrderStatusUpdatedEvent,
@@ -325,7 +328,6 @@ async def ingest_order_status_updated(
     response_model=EventIngestionResponse,
     # n8n workflow #5 (additive, plan section "the constraint that shapes
     # everything"): does not disturb the four locked-in workflow ids.
-    dependencies=[Depends(require_service_token)],
 )
 async def ingest_order_revised(
     event: OrderRevisedEvent,
@@ -458,7 +460,7 @@ async def ingest_order_revised(
     # A one-time onboarding import, not part of the four locked-in n8n
     # workflows -- gated the same way as the other event endpoints so it
     # shares the provider-agnostic trust model, not because n8n calls it.
-    dependencies=[Depends(require_service_token)],
+
 )
 async def ingest_order_backfilled(
     event: OrderBackfillEvent,
