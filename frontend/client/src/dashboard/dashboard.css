@@ -1,0 +1,843 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
+/* Every rule here is scoped under .sg-dashboard (the AppShell root). The
+   landing and auth pages share this document and define their own --bg,
+   --bg-raised, --border and global element styles, so nothing may leak out. */
+.sg-dashboard {
+  --bg: #f4f5f7;
+  --bg-raised: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f9fafb;
+  --border: #e2e8f0;
+  --border-active: #cbd5e1;
+  --ink: #1e293b;
+  --ink-muted: #64748b;
+  --ink-faint: #94a3b8;
+  --accent: #10b981;
+  --accent-dim: rgba(16, 185, 129, 0.15);
+  --accent-glow: rgba(16, 185, 129, 0.3);
+  --safe: #10b981;
+  --watch: #f59e0b;
+  --at-risk: #f97316;
+  --breached: #ef4444;
+  --rail-width: 250px;
+  --strip-height: 64px;
+
+  --sidebar-bg: #2c3539;
+  --sidebar-ink: #f8fafc;
+  --sidebar-ink-muted: #94a3b8;
+  --sidebar-border: rgba(255,255,255,0.1);
+
+  /* Referenced by page markup; pinned here so the landing page's own --muted
+     cannot leak in. */
+  --muted: var(--ink-muted);
+  --rule-strong: var(--accent);
+}
+
+.sg-dashboard, .sg-dashboard * { box-sizing: border-box; margin: 0; }
+
+.sg-dashboard {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.sg-dashboard .num, .sg-dashboard table { font-variant-numeric: tabular-nums; }
+.sg-dashboard h1, .sg-dashboard h2, .sg-dashboard h3 { font-weight: 600; letter-spacing: -0.02em; }
+.sg-dashboard h1 { font-size: 1.625rem; }
+.sg-dashboard h2 { font-size: 1.125rem; }
+.sg-dashboard h3 { font-size: 0.9375rem; }
+.sg-dashboard a { color: inherit; }
+.sg-dashboard button { font: inherit; cursor: pointer; }
+
+.sg-dashboard :focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ── Shell ────────────────────────────────────────────────────────── */
+
+.sg-dashboard .shell {
+  display: grid;
+  grid-template-columns: var(--rail-width) 1fr;
+  min-height: 100%;
+}
+
+/* ── Sidebar / Rail ───────────────────────────────────────────────── */
+
+.sg-dashboard .rail {
+  background: var(--sidebar-bg);
+  border-right: none;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  z-index: 20;
+  color: var(--sidebar-ink);
+}
+
+.sg-dashboard .rail-logo {
+  padding: 24px 20px 32px;
+}
+
+.sg-dashboard .logo-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--sidebar-ink);
+  letter-spacing: -0.02em;
+}
+
+.sg-dashboard .logo-subtitle {
+  font-size: 0.75rem;
+  color: var(--sidebar-ink-muted);
+  margin-top: 4px;
+}
+
+/* Vertical limelight nav */
+.sg-dashboard .limelight-rail {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  padding: 0;
+  flex: 1;
+}
+
+.sg-dashboard .limelight-item {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  height: 48px;
+  padding: 0 20px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+  color: var(--sidebar-ink-muted);
+}
+
+.sg-dashboard .limelight-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--sidebar-ink);
+}
+
+.sg-dashboard .limelight-item.active {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--sidebar-ink);
+}
+
+.sg-dashboard .limelight-icon {
+  margin-right: 12px;
+}
+
+.sg-dashboard .limelight-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  flex: 1;
+}
+
+.sg-dashboard .limelight-item .nav-badge {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--breached);
+  color: #fff;
+  font-size: 0.625rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+/* The spotlight beam */
+.sg-dashboard .limelight-beam {
+  position: absolute;
+  left: 0;
+  z-index: 10;
+  width: 4px;
+  height: 48px;
+  background: var(--accent);
+  box-shadow: 10px 0 20px var(--accent-glow);
+  pointer-events: none;
+}
+
+.sg-dashboard .limelight-beam.ready {
+  transition: top 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* The cone glow */
+.sg-dashboard .limelight-cone {
+  position: absolute;
+  left: 4px;
+  top: 0;
+  width: 120px;
+  height: 48px;
+  pointer-events: none;
+  background: linear-gradient(90deg, var(--accent-dim) 0%, transparent 100%);
+  opacity: 0.8;
+}
+
+.sg-dashboard .rail-foot {
+  margin-top: auto;
+  padding: 20px;
+  border-top: 1px solid var(--sidebar-border);
+}
+
+.sg-dashboard .foot-label {
+  font-size: 0.75rem;
+  color: var(--sidebar-ink-muted);
+  margin-bottom: 8px;
+}
+
+.sg-dashboard .rail-foot-btn {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--sidebar-border);
+  background: transparent;
+  color: var(--sidebar-ink);
+  text-align: center;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.sg-dashboard .rail-foot-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Tooltip on hover */
+.sg-dashboard .limelight-item .tooltip {
+  display: none;
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--ink);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+  z-index: 50;
+  pointer-events: none;
+}
+
+.sg-dashboard .limelight-item:hover .tooltip {
+  display: block;
+}
+
+/* ── Main area ────────────────────────────────────────────────────── */
+
+.sg-dashboard .main { min-width: 0; }
+
+.sg-dashboard .strip {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  height: var(--strip-height);
+  padding: 0 var(--content-inset);
+  background: var(--bg-raised);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.sg-dashboard .strip-item {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.sg-dashboard .strip-item .label {
+  font-size: 0.6875rem;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.sg-dashboard .strip-item .value {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.sg-dashboard .strip-spacer { margin-left: auto; }
+
+/* Fluid up to a readable cap, centred in the space beside the rail. The strip
+   and banner pad to the same edges so their content lines up with the page. */
+.sg-dashboard {
+  --content-max: 1440px;
+  --content-pad: 28px;
+  --content-inset: max(var(--content-pad), calc((100% - var(--content-max)) / 2 + var(--content-pad)));
+}
+
+.sg-dashboard .content {
+  width: 100%;
+  max-width: var(--content-max);
+  margin-inline: auto;
+  padding: var(--content-pad);
+}
+
+.sg-dashboard .page-head { margin-bottom: 24px; }
+.sg-dashboard .page-head p { margin: 4px 0 0; color: var(--ink-muted); max-width: 64ch; font-size: 0.875rem; }
+
+/* ── Panels / Cards ───────────────────────────────────────────────── */
+
+.sg-dashboard .panel {
+  background: var(--bg-card);
+  border: none;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
+  border-radius: 8px;
+  padding: 24px;
+}
+
+/* Stacked panels get breathing room. Grid cells are excluded: they are spaced
+   by the grid gap, and a top margin there pushes every card after the first
+   down, which is what made rows of cards look ragged. */
+.sg-dashboard :not(.grid-2, .grid-3, .plan-grid) > .panel + .panel,
+.sg-dashboard .stack > * + * { margin-top: 16px; }
+
+.sg-dashboard .panel-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.sg-dashboard .panel-title h2 { font-size: 0.9375rem; }
+.sg-dashboard .panel-title .hint { font-size: 0.75rem; color: var(--ink-muted); }
+
+.sg-dashboard .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.sg-dashboard .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+
+/* ── Gap bar ──────────────────────────────────────────────────────── */
+
+.sg-dashboard .gap-figure {
+  padding: 24px 20px 20px;
+  border-radius: 12px;
+}
+
+.sg-dashboard .gap-headline {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.sg-dashboard .gap-headline .big {
+  font-size: 3.5rem;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 0.9;
+  color: var(--ink);
+}
+
+.sg-dashboard .gap-headline .unit {
+  color: var(--ink-muted);
+  max-width: 28ch;
+  font-size: 0.8125rem;
+}
+
+.sg-dashboard .bar-row {
+  display: grid;
+  grid-template-columns: 120px 1fr 64px;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.sg-dashboard .bar-row .bar-label { font-size: 0.75rem; color: var(--ink-muted); }
+
+.sg-dashboard .bar-track {
+  position: relative;
+  height: 24px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.sg-dashboard .bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: #1f3f35; /* Dark slate green for observed throughput */
+  transition: width 0.6s ease;
+}
+
+.sg-dashboard .bar-fill.demand { background: #377d56; /* Solid green for covered demand */ }
+
+.sg-dashboard .bar-fill.overshoot {
+  background: repeating-linear-gradient(
+    -45deg,
+    #377d56,
+    #377d56 4px,
+    #e2e8f0 4px,
+    #e2e8f0 8px
+  );
+}
+
+.sg-dashboard .bar-split { display: flex; height: 100%; }
+
+.sg-dashboard .capacity-line {
+  position: absolute;
+  top: -6px;
+  bottom: -6px;
+  width: 2px;
+  background: var(--ink-muted);
+  border-radius: 1px;
+}
+
+.sg-dashboard .capacity-line::after {
+  content: attr(data-label);
+  position: absolute;
+  top: -14px;
+  left: 6px;
+  font-size: 0.625rem;
+  color: var(--ink-faint);
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.sg-dashboard .bar-value { text-align: right; font-weight: 600; font-size: 0.875rem; }
+
+/* ── Metrics ──────────────────────────────────────────────────────── */
+
+.sg-dashboard .metric { display: flex; flex-direction: column; gap: 2px; }
+.sg-dashboard .metric .label { font-size: 0.75rem; color: var(--ink-muted); }
+
+.sg-dashboard .metric .value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.sg-dashboard .metric .sub { font-size: 0.75rem; color: var(--ink-faint); }
+.sg-dashboard .metric-row { display: flex; gap: 32px; flex-wrap: wrap; }
+
+/* ── Badges ───────────────────────────────────────────────────────── */
+
+.sg-dashboard .badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+  border: 1px solid transparent;
+}
+
+.sg-dashboard .badge.safe, .sg-dashboard .badge.low {
+  background: #ffffff;
+  border-color: var(--safe);
+  color: var(--safe);
+}
+.sg-dashboard .badge.watch, .sg-dashboard .badge.medium {
+  background: #ffffff;
+  border-color: var(--watch);
+  color: var(--watch);
+}
+.sg-dashboard .badge.at_risk, .sg-dashboard .badge.high {
+  background: #ffffff;
+  border-color: var(--at-risk);
+  color: var(--at-risk);
+}
+.sg-dashboard .badge.breached, .sg-dashboard .badge.critical {
+  background: #ffffff;
+  border-color: var(--breached);
+  color: var(--breached);
+}
+.sg-dashboard .badge.neutral {
+  background: #f1f5f9;
+  color: var(--ink-muted);
+}
+.sg-dashboard .badge.pending, .sg-dashboard .badge.awaiting_enactment, .sg-dashboard .badge.enacted {
+  background: #ffffff;
+  border-color: var(--watch);
+  color: var(--watch);
+}
+.sg-dashboard .badge.success {
+  background: #ffffff;
+  border-color: var(--safe);
+  color: var(--safe);
+}
+.sg-dashboard .badge.failed {
+  background: #ffffff;
+  border-color: var(--breached);
+  color: var(--breached);
+}
+
+/* Verification badges (P6): whether a capacity claim actually showed up in
+   measured throughput. UNVERIFIED is deliberately not neutral grey -- it
+   must draw the eye the same way an unresolved action does. */
+.sg-dashboard .badge.unverified {
+  background: #ffffff;
+  border-color: var(--at-risk);
+  color: var(--at-risk);
+}
+.sg-dashboard .badge.achieved {
+  background: #ffffff;
+  border-color: var(--safe);
+  color: var(--safe);
+}
+.sg-dashboard .badge.partial {
+  background: #ffffff;
+  border-color: var(--watch);
+  color: var(--watch);
+}
+.sg-dashboard .badge.not_observed {
+  background: #ffffff;
+  border-color: var(--breached);
+  color: var(--breached);
+}
+
+/* ── Tables ───────────────────────────────────────────────────────── */
+
+.sg-dashboard table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+
+.sg-dashboard th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--ink-faint);
+  padding: 0 10px 8px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.sg-dashboard td {
+  padding: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sg-dashboard tbody tr:hover { background: var(--bg-card-hover); }
+.sg-dashboard td.right, .sg-dashboard th.right { text-align: right; }
+
+.sg-dashboard .row-link {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+.sg-dashboard .row-link:hover { text-decoration: underline; }
+
+/* ── Controls ─────────────────────────────────────────────────────── */
+
+.sg-dashboard .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.sg-dashboard .field label { font-size: 0.8125rem; font-weight: 500; color: var(--ink-muted); }
+.sg-dashboard .field .help, .sg-dashboard .help { font-size: 0.75rem; color: var(--ink-faint); }
+
+.sg-dashboard input[type="number"], .sg-dashboard input[type="range"] {
+  font: inherit;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--ink);
+  width: 100%;
+}
+
+.sg-dashboard input[type="number"]:focus {
+  border-color: var(--accent);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+
+.sg-dashboard input[type="range"] {
+  padding: 0;
+  accent-color: var(--accent);
+}
+
+.sg-dashboard .btn {
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--accent);
+  color: #0f1219;
+  padding: 8px 18px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: opacity 0.15s;
+}
+
+.sg-dashboard .btn:hover { opacity: 0.85; }
+.sg-dashboard .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.sg-dashboard .btn.secondary {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--border);
+}
+
+.sg-dashboard .btn.secondary:hover {
+  border-color: var(--ink-muted);
+}
+
+.sg-dashboard .btn.danger {
+  background: var(--breached);
+  border-color: var(--breached);
+  color: #fff;
+}
+
+/* ── Notices / States ─────────────────────────────────────────────── */
+
+.sg-dashboard .notice {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  background: var(--bg-card);
+  padding: 14px 16px;
+  font-size: 0.8125rem;
+}
+.sg-dashboard .notice.warn { border-left-color: var(--at-risk); }
+.sg-dashboard .notice.error { border-left-color: var(--breached); }
+
+.sg-dashboard .empty {
+  padding: 48px 20px;
+  text-align: center;
+  color: var(--ink-muted);
+}
+.sg-dashboard .empty h3 { color: var(--ink); margin-bottom: 6px; }
+
+.sg-dashboard .banner {
+  background: var(--breached);
+  color: #fff;
+  padding: 8px var(--content-inset);
+  font-size: 0.8125rem;
+}
+
+.sg-dashboard .skeleton {
+  height: 14px;
+  background: var(--border);
+  border-radius: 4px;
+  opacity: 0.5;
+}
+
+@keyframes tick {
+  from { background: var(--accent-dim); }
+  to { background: transparent; }
+}
+.sg-dashboard .ticked { animation: tick 700ms ease-out; }
+@media (prefers-reduced-motion: reduce) { .sg-dashboard .ticked { animation: none; } }
+
+/* ── Responsive ───────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  /* minmax(0, 1fr), not 1fr: a 1fr track grows to the bar's min-content width
+     (logo + seven labelled tabs), which pushed the page ~900px wide on a phone. */
+  .sg-dashboard .shell { grid-template-columns: minmax(0, 1fr); }
+
+  .sg-dashboard .rail {
+    position: sticky;
+    top: 0;
+    height: auto;
+    flex-direction: row;
+    align-items: center;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 8px 12px;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .sg-dashboard .rail-logo { flex-shrink: 0; margin: 0 8px 0 0; padding: 0 4px; }
+
+  /* The tabs scroll sideways inside the bar; the logo and sign-out stay put. */
+  .sg-dashboard .limelight-rail {
+    flex-direction: row;
+    gap: 2px;
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .sg-dashboard .limelight-rail::-webkit-scrollbar { display: none; }
+  .sg-dashboard .limelight-item { flex-shrink: 0; white-space: nowrap; }
+
+  .sg-dashboard .limelight-beam {
+    /* Hide vertical beam on mobile */
+    display: none;
+  }
+
+  .sg-dashboard .limelight-item .tooltip { display: none !important; }
+
+  /* Keep sign-out reachable on small screens: just the button, at the end of the bar. */
+  .sg-dashboard .rail-foot { flex-shrink: 0; margin: 0 0 0 8px; padding: 0; border-top: none; display: flex; align-items: center; }
+  .sg-dashboard .rail-account, .sg-dashboard .foot-label { display: none; }
+  .sg-dashboard .rail-foot-btn { width: auto; white-space: nowrap; }
+
+  .sg-dashboard .grid-2, .sg-dashboard .grid-3 { grid-template-columns: 1fr; }
+  .sg-dashboard { --content-pad: 16px; }
+  .sg-dashboard .strip { padding: 16px; }
+  .sg-dashboard .strip { height: auto; flex-wrap: wrap; gap: 16px; top: var(--rail-bar-height, 0); position: static; }
+  .sg-dashboard .rail-logo .logo-subtitle { display: none; }
+  /* Wide tables scroll inside their panel instead of widening the page. */
+  .sg-dashboard .panel { overflow-x: auto; }
+}
+
+/* A sentence under a panel's figures, for something the numbers cannot say. */
+.sg-dashboard .note {
+  margin: 18px 0 0;
+  font-size: 0.8125rem;
+  color: var(--ink-muted);
+  line-height: 1.55;
+}
+
+.sg-dashboard .note strong { color: var(--ink); font-weight: 600; }
+
+/* A deadline that has already gone is not a countdown. */
+.sg-dashboard .note.elapsed strong { color: var(--breached); }
+
+/* Alert recipient form. Wraps rather than scrolls: the severity select and
+   the submit button must stay reachable on a narrow window. */
+.sg-dashboard .alert-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  margin-bottom: 16px;
+}
+.sg-dashboard .alert-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--ink-muted);
+}
+.sg-dashboard .alert-form input, .sg-dashboard .alert-form select {
+  min-width: 200px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-raised);
+  color: var(--ink);
+  font-size: 0.875rem;
+}
+.sg-dashboard .alert-form input:focus, .sg-dashboard .alert-form select:focus {
+  outline: 2px solid var(--accent-dim);
+  border-color: var(--accent);
+}
+
+/* ── Account (rail foot) ───────────────────────────────────────────── */
+
+.sg-dashboard .rail-account {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  min-width: 0;
+}
+
+.sg-dashboard .rail-avatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent-dim);
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.sg-dashboard .rail-account-text { display: flex; flex-direction: column; min-width: 0; }
+
+.sg-dashboard .rail-account-name,
+.sg-dashboard .rail-account-email {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sg-dashboard .rail-account-name { color: var(--sidebar-ink); font-size: 0.8125rem; font-weight: 500; }
+.sg-dashboard .rail-account-email { color: var(--sidebar-ink-muted); font-size: 0.75rem; }
+.sg-dashboard .rail-foot-btn:disabled { opacity: 0.6; cursor: progress; }
+
+@media (max-width: 900px) {
+  /* After the base account rules on purpose: on the phone bar only the sign-out
+     button fits beside the tabs. */
+  .sg-dashboard .rail-account { display: none; }
+}
+
+/* ── Recovery plan cards ───────────────────────────────────────────── */
+
+/* Cards in a row share row tracks (subgrid), so the title, copy, headline
+   figure, table and button of every card line up, whatever each plan's text
+   length. */
+.sg-dashboard .plan-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  column-gap: 16px;
+  row-gap: 0;
+  align-items: stretch;
+}
+
+.sg-dashboard .plan-card {
+  display: grid;
+  grid-row: span 5;
+  grid-template-rows: subgrid;
+  row-gap: 0;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
+  transition: box-shadow 0.2s ease;
+}
+
+.sg-dashboard .plan-card.is-recommended {
+  box-shadow: 0 0 0 2px var(--rule-strong), 0 8px 24px rgba(16, 185, 129, 0.12);
+}
+
+.sg-dashboard .plan-card-head { align-items: center; margin-bottom: 12px; }
+
+.sg-dashboard .plan-card-copy { display: flex; flex-direction: column; gap: 10px; padding-bottom: 16px; }
+
+.sg-dashboard .plan-card-description { color: var(--ink-muted); font-size: 0.875rem; }
+
+.sg-dashboard .plan-card-families { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.sg-dashboard .plan-card-note { font-size: 0.8125rem; color: var(--ink-muted); }
+.sg-dashboard .plan-card-note strong { color: var(--ink); }
+
+.sg-dashboard .plan-card-warning {
+  padding: 8px 10px;
+  border: 1px solid var(--at-risk);
+  border-radius: 6px;
+  color: var(--at-risk);
+  font-size: 0.8125rem;
+}
+
+.sg-dashboard .plan-card .metric { align-self: end; padding-bottom: 14px; }
+
+.sg-dashboard .plan-card-table { align-self: start; width: 100%; }
+
+.sg-dashboard .plan-card-foot {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 16px;
+}
+
+.sg-dashboard .plan-card-caution { color: var(--at-risk); font-size: 0.8125rem; }
+
+.sg-dashboard .plan-card-cta { display: block; text-align: center; text-decoration: none; }
+
+.sg-dashboard .plan-card-lost { margin-top: 4px; font-size: 0.75rem; color: var(--ink-faint); }
