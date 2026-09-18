@@ -1,59 +1,165 @@
-version: '3.8'
-
 services:
   postgres:
-    image: postgres:15-alpine
-    container_name: surgekeeper_postgres
+    image: postgres:16
+    container_name: surgeguard-postgres
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: n8n
-      POSTGRES_PASSWORD: n8n_password_change_me
-      POSTGRES_DB: n8n
-    ports:
-      - "5432:5432"
+      POSTGRES_USER: surgeguard
+      POSTGRES_PASSWORD: surgeguard
+      POSTGRES_DB: surgeguard
+    # Deliberately NOT published. Nothing needs it: the backend reaches this
+    # over the compose network as `postgres:5432`, and the test suite uses the
+    # loopback-only 15432 from docker-compose.override.yml. Publishing 5432
+    # put a database holding the default surgeguard/surgeguard credentials on
+    # every network interface, which is the worst exposure in the stack -- and
+    # it also collided with a native Postgres install on the same port.
+    # To inspect the database, exec in instead:
+    #   docker compose exec postgres psql -U surgeguard -d surgeguard
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U n8n"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U surgeguard"]
+      interval: 5s
       timeout: 5s
       retries: 5
-    networks:
-      - surgekeeper_network
 
-  n8n:
-    image: n8nio/n8n:latest
-    container_name: surgekeeper_n8n
+  # Apply the schema before either process that touches Postgres starts. This
+  # makes a fresh `pgdata` volume self-initialising, so the startup demo-user
+  # upsert always finds the `users` table.
+  migrate:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: ["alembic", "upgrade", "head"]
     environment:
-      DB_TYPE: postgresdb
-      DB_POSTGRESDB_HOST: postgres
-      DB_POSTGRESDB_PORT: 5432
-      DB_POSTGRESDB_DATABASE: n8n
-      DB_POSTGRESDB_USER: n8n
-      DB_POSTGRESDB_PASSWORD: n8n_password_change_me
-      N8N_BASIC_AUTH_ACTIVE: 'true'
-      N8N_BASIC_AUTH_USER: admin
-      N8N_BASIC_AUTH_PASSWORD: n8n_admin_password
-      N8N_HOST: localhost
-      N8N_PORT: 5678
-      N8N_PROTOCOL: http
-      NODE_ENV: production
-      WEBHOOK_URL: http://localhost:5678/
-    ports:
-      - "5678:5678"
-    volumes:
-      - n8n_data:/home/node/.n8n
+      DATABASE_URL: postgresql+asyncpg://surgeguard:surgeguard@postgres:5432/surgeguard
     depends_on:
       postgres:
         condition: service_healthy
-    networks:
-      - surgekeeper_network
 
-networks:
-  surgekeeper_network:
-    driver: bridge
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: surgeguard-backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+asyncpg://surgeguard:surgeguard@postgres:5432/surgeguard
+      FRONTEND_ORIGIN: http://localhost:5173
+      # N8N_RECOVERY_WEBHOOK_URL is intentionally unset: the live recovery
+      # workflow polls GET /api/recovery-actions rather than taking a webhook.
+      # Enables the demo reset/surge controls. They drive the simulator and
+      # clear operational data, so they exist only where this is set.
+      SIMULATOR_URL: http://simulator:8010
+      # The shared secret n8n must present on the six endpoints it calls.
+      # `:?` fails `docker compose up` immediately when it is unset, rather
+      # than starting a backend whose expected token silently disagrees with
+      # what n8n sends -- that disagreement surfaces as 401s during the demo
+      # and looks exactly like a backend bug.
+      SERVICE_TOKEN: ${SURGEGUARD_SERVICE_TOKEN:?set SURGEGUARD_SERVICE_TOKEN in .env}
+      # Email. Deliberately NOT the `:?` form used by SERVICE_TOKEN above.
+      # An unset service token means a broken demo and should stop the stack;
+      # unset SMTP means "write emails to the log", which is a supported and
+      # expected way to run this project. Copying `:?` here would make
+      # `docker compose up` refuse to start on any machine without mail
+      # credentials -- the exact opposite of what the console fallback is for.
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_SENDER: ${SMTP_SENDER:-}
+      # Where emailed links point. With FRONTEND_BASE_URL set they open the
+      # frontend's /verify-email and /set-new-password pages; set it blank to
+      # have the backend handle the links itself via PUBLIC_BASE_URL.
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:8000}
+      FRONTEND_BASE_URL: ${FRONTEND_BASE_URL-http://localhost:5173}
+      # Durable, verified demo administrator. The backend upserts this known
+      # account at every startup, after `migrate` has prepared a fresh volume.
+      DEMO_USER_EMAIL: ${DEMO_USER_EMAIL:-demo@surgeguard.local}
+      DEMO_USER_PASSWORD: ${DEMO_USER_PASSWORD:-SurgeGuardDemo1!}
+    # Bound to loopback, NOT 0.0.0.0. A bare "8000:8000" publishes on every
+    # interface, so anyone on the same wifi could reach the demo controls --
+    # or the database -- by IP. Container-to-container traffic is unaffected:
+    # n8n reaches the backend as `backend:8000` over the compose network,
+    # which never touches a published port. If you ever need to demo from a
+    # different machine, drop the 127.0.0.1 prefix on THAT service only, and
+    # put it back afterwards.
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen("http://localhost:8000/health")
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # Alerting runs here, not in the backend, because evaluating rules on the
+  # request path cannot detect the ABSENCE of requests -- and telemetry
+  # stopping is the condition most worth alerting on. Reuses the backend
+  # image with a different command; there is nothing worker-specific to build.
+  worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: surgeguard-worker
+    restart: unless-stopped
+    command: ["python", "-m", "app.alerts.worker"]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://surgeguard:surgeguard@postgres:5432/surgeguard
+      # Same mail configuration as the backend, and unset for the same
+      # reason: no SMTP means alerts are written to this container's log
+      # instead of sent, which is a supported way to run the stack.
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_SENDER: ${SMTP_SENDER:-}
+    # No published port: it serves nothing. Watch it with
+    #   docker compose logs -f worker
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: surgeguard-n8n
+    restart: unless-stopped
+    environment:
+      # Same value as the backend above -- the workflows send it as
+      # X-Service-Token via an ={{ $env.SURGEGUARD_SERVICE_TOKEN }} expression.
+      SURGEGUARD_SERVICE_TOKEN: ${SURGEGUARD_SERVICE_TOKEN:?set SURGEGUARD_SERVICE_TOKEN in .env}
+      # n8n 2.x defaults this to true, which can stop a node expression from
+      # reading $env at all. If that applies to HTTP Request headers, the token
+      # resolves to an empty string and every backend call 401s -- silently,
+      # with nothing in the workflow to suggest why. Cheap to disable; the
+      # failure it prevents is not cheap to diagnose mid-demo.
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+    ports:
+      - "127.0.0.1:5678:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+  simulator:
+    build:
+      context: .
+      dockerfile: simulator/Dockerfile
+    container_name: surgeguard-simulator
+    restart: unless-stopped
+    environment:
+      N8N_WEBHOOK_BASE_URL: http://n8n:5678/webhook
+    ports:
+      - "127.0.0.1:8010:8010"
+    depends_on:
+      - n8n
+      - backend
 
 volumes:
-  postgres_data:
-    driver: local
+  pgdata:
   n8n_data:
-    driver: local
