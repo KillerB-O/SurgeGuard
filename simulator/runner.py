@@ -266,8 +266,8 @@ class SimulationRunner:
     ) -> None:
         """Publish measured throughput and unfinished-order telemetry.
 
-        Every caller publishes `open_orders`, which is what docs/07 section 6
-        asks a snapshot for and which is genuinely counted here. What changed is
+        Every caller publishes `open_orders`, which is what a snapshot is for
+        and which is genuinely counted here. What changed is
         the throughput field: it used to be `capacity_per_hour` handed straight
         back, so the backend's observed-versus-configured distinction was
         decorative and a floor falling behind its rating could never be seen.
@@ -276,8 +276,8 @@ class SimulationRunner:
         true by construction rather than by the floor speeding up.
 
         It now reports what `advance_statuses` measured. A capacity change still
-        publishes a snapshot, so the approval loop in docs/07 section 11 still
-        closes; the new rate simply shows up as the floor actually earns it.
+        publishes a snapshot, so the approval loop still closes; the new rate
+        simply shows up as the floor actually earns it.
 
         Args:
             capacity_per_hour: Configured rating, used only as the fallback
