@@ -1,0 +1,61 @@
+{
+  "_comment": [
+    "Work-unit classification rules. Demo defaults, not business truth --",
+    "calibrate from historical pick/pack times later (docs/10 section 2).",
+    "Bands match docs/07: Simple 1.0, Moderate 1.5, Complex 2.0, Heavy 2.5.",
+    "Edit this file to retune; no code change and no deploy of new logic.",
+    "stage_weights is the share of an order's total work each lifecycle step",
+    "costs, in ORDER_LIFECYCLE order: PENDING->PICKING, PICKING->PACKED,",
+    "PACKED->READY, READY->DISPATCHED. Must sum to 1.0. Equal by default so",
+    "introducing this key changes no derived throughput figure by construction",
+    "(see app/routers/events.py and app/repository.py); retune once real",
+    "stage durations are known (docs/05 section 2).",
+    "arrival_shapes and segment_mix describe the observed mix of incoming",
+    "orders (docs/07), mirroring simulator/commerce.py's ORDER_SHAPES and",
+    "SEGMENTS: they shape projected future arrivals (app/projection.py) so a",
+    "PROJ- order carries the same attributes -- item_count, segment, and a",
+    "work_units figure classify() itself would produce -- a real order does.",
+    "Never used to classify a real order, which is always reclassified from",
+    "its own attributes."
+  ],
+  "units_per_line_equivalent": 5,
+  "special_handling_surcharge": 0.5,
+  "max_work_units": 4.0,
+  "stage_weights": [0.25, 0.25, 0.25, 0.25],
+  "bands": [
+    {
+      "name": "SIMPLE",
+      "work_units": 1.0,
+      "max_effective_lines": 2
+    },
+    {
+      "name": "MODERATE",
+      "work_units": 1.5,
+      "max_effective_lines": 5
+    },
+    {
+      "name": "COMPLEX",
+      "work_units": 2.0,
+      "max_effective_lines": 10
+    },
+    {
+      "name": "HEAVY",
+      "work_units": 2.5,
+      "max_effective_lines": null
+    }
+  ],
+  "arrival_shapes": [
+    {"line_count": 1, "unit_count": 1, "special_handling": false, "weight": 0.40},
+    {"line_count": 2, "unit_count": 3, "special_handling": false, "weight": 0.25},
+    {"line_count": 4, "unit_count": 6, "special_handling": false, "weight": 0.18},
+    {"line_count": 3, "unit_count": 4, "special_handling": true, "weight": 0.09},
+    {"line_count": 8, "unit_count": 20, "special_handling": false, "weight": 0.06},
+    {"line_count": 12, "unit_count": 60, "special_handling": true, "weight": 0.02}
+  ],
+  "segment_mix": [
+    {"segment": "FIRST_TIME", "weight": 0.30},
+    {"segment": "SUBSCRIBER", "weight": 0.20},
+    {"segment": "HIGH_LTV", "weight": 0.15},
+    {"segment": null, "weight": 0.35}
+  ]
+}
