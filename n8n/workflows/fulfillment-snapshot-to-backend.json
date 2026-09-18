@@ -1,0 +1,94 @@
+{
+  "id": "5sDYKTBV6s1BpaLh",
+  "name": "Fulfillment Snapshot → Backend",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "fulfillment/snapshot",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "14aa83d7-4bd5-4f09-b0bf-fa80c0633c82",
+      "name": "Webhook",
+      "webhookId": "e7881dbd-1c00-47c9-8387-d0594893264a"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://backend:8000/api/events/fulfillment",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Service-Token",
+              "value": "={{ $env.SURGEGUARD_SERVICE_TOKEN }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"event_id\": \"{{$json.body.event_id}}\",\n  \"event_type\": \"fulfillment_snapshot\",\n  \"source\": \"fulfillment_sim\",\n  \"facility_id\": \"{{$json.body.facility_id}}\",\n  \"occurred_at\": \"{{$json.body.occurred_at}}\",\n  \"open_orders\": {{$json.body.open_orders}},\n  \"work_units_completed_last_hour\": {{$json.body.work_units_completed_last_hour}}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        224,
+        0
+      ],
+      "id": "ed617169-a292-4096-a2bc-8fd53183056d",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\n  \"event_id\": $json.event_id,\n  \"status\": $json.status\n} }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        448,
+        0
+      ],
+      "id": "3aef3850-1688-42c7-8993-e32d526cdcb9",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "pinData": {}
+}
