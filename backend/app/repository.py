@@ -57,7 +57,10 @@ async def get_facility(conn: AsyncConnection, facility_id: str) -> dict:
     """
     result = await conn.execute(
         text(
-            "SELECT facility_id, name, capacity_per_hour, dispatch_promise_hours "
+            "SELECT facility_id, name, capacity_per_hour, dispatch_promise_hours, "
+            "dispatch_cutoff_utc, execution_adapter, watch_threshold_hours, "
+            "at_risk_threshold_hours, exposure_high_ratio, exposure_critical_ratio, "
+            "breach_critical_ratio, operating_opens_at, operating_closes_at "
             "FROM facilities WHERE facility_id = :facility_id"
         ),
         {"facility_id": facility_id},
@@ -298,8 +301,8 @@ def _to_order(row) -> Order:
 async def list_pending_orders(conn: AsyncConnection, facility_id: str) -> list[Order]:
     """Return the orders the scheduler is allowed to reorder.
 
-    Only PENDING orders are reorderable, so no read needs to materialise the
-    facility's finished orders just to run the queue.
+    Only PENDING orders are reorderable, so no read needs to
+    materialise the facility's finished orders just to run the queue.
     """
     result = await conn.execute(
         text(

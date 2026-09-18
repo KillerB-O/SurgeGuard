@@ -7,7 +7,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncConnection
 
-
+from app.auth.dependencies import require_service_token
 from app.db import get_connection
 from app.models import (
     ORDER_LIFECYCLE,
@@ -105,6 +105,7 @@ async def _claim_event(
     "/orders",
     response_model=EventIngestionResponse,
     # n8n workflow commerce-orders-to-backend.json (plan 03, ACCESS-02).
+    dependencies=[Depends(require_service_token)],
 )
 async def ingest_order_created(
     event: OrderCreatedEvent,
@@ -183,6 +184,7 @@ async def ingest_order_created(
     "/fulfillment",
     response_model=EventIngestionResponse,
     # n8n workflow fulfillment-snapshot-to-backend.json (plan 03, ACCESS-02).
+    dependencies=[Depends(require_service_token)],
 )
 async def ingest_fulfillment_snapshot(
     event: FulfillmentSnapshotEvent,
@@ -233,7 +235,7 @@ async def ingest_fulfillment_snapshot(
     "/order-status",
     response_model=EventIngestionResponse,
     # n8n workflow fulfillment-status-to-backend.json (plan 03, ACCESS-02).
-
+    dependencies=[Depends(require_service_token)],
 )
 async def ingest_order_status_updated(
     event: OrderStatusUpdatedEvent,
@@ -328,6 +330,7 @@ async def ingest_order_status_updated(
     response_model=EventIngestionResponse,
     # n8n workflow #5 (additive, plan section "the constraint that shapes
     # everything"): does not disturb the four locked-in workflow ids.
+    dependencies=[Depends(require_service_token)],
 )
 async def ingest_order_revised(
     event: OrderRevisedEvent,
@@ -460,7 +463,7 @@ async def ingest_order_revised(
     # A one-time onboarding import, not part of the four locked-in n8n
     # workflows -- gated the same way as the other event endpoints so it
     # shares the provider-agnostic trust model, not because n8n calls it.
-
+    dependencies=[Depends(require_service_token)],
 )
 async def ingest_order_backfilled(
     event: OrderBackfillEvent,
@@ -751,8 +754,7 @@ def _require_valid_transition(
     just be conceptually wrong. It is legal from any pre-dispatch status
     (including restating an already-cancelled order, a harmless no-op) and
     refused once DISPATCHED -- an order that already left has nothing left to
-    cancel. DELAYED remains outside the lifecycle entirely (docs/10 section 9),
-    unchanged by P8.
+    cancel. DELAYED remains outside the lifecycle entirely, unchanged by P8.
 
     Args:
         current: Status persisted for the order.

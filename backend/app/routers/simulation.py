@@ -12,10 +12,10 @@ from sqlalchemy.ext.asyncio import AsyncConnection
 
 from app import clock, repository
 from app.auth.dependencies import (
-     require_service_token,
-     require_session,
-     require_session_or_service_token,
- )
+    require_service_token,
+    require_session,
+    require_session_or_service_token,
+)
 from app.consequences import EXPOSED, LateDispatchPolicy, late_dispatch_rate
 from app.db import get_connection
 from app.executor import request_execution
@@ -247,8 +247,8 @@ def _hypothetical_orders(orders: list[Order], promise_hours: float | None) -> li
         New order models suitable for a non-persistent scheduler run.
     """
     # Without an explicit hypothetical policy the persisted customer deadline is
-    # the only correct one to schedule against (docs/02 section 8B). Substituting
-    # the facility default here would silently re-promise every pending order and
+    # the only correct one to schedule against. Substituting the facility
+    # default here would silently re-promise every pending order and
     # make a capacity-only What-If change SLA status for the wrong reason.
     if promise_hours is None:
         return list(orders)
@@ -270,7 +270,7 @@ def _require_projection_for_demand_multiplier(request: SimulationRequest) -> Non
 
     A multiplier scales arrivals that have not happened yet. Without a horizon
     there are none, so honouring it would report an assumption the scheduler
-    never applied (docs/12 section 1).
+    never applied.
 
     Args:
         request: The simulation request as received.
@@ -1187,9 +1187,9 @@ async def confirm_recovery_action_enactment(
     """Move an AWAITING_ENACTMENT action to ENACTED or FAILED, once.
 
     ENACTED, not SUCCESS: SUCCESS already means only "n8n successfully called
-    the endpoints" (docs/08 section 7), and reusing it here for "a human
-    clicked confirm" would recreate the exact conflation that sentence warns
-    against, just for a different caller. On success, applies this posture's
+    the endpoints", and reusing it here for "a human clicked confirm" would
+    recreate the exact conflation that distinction is meant to avoid, just
+    for a different caller. On success, applies this posture's
     internal effects (queue, promise, cutoff) and records the facility policy
     change -- exactly what n8n's synchronous chain does for the simulator
     adapter, at the moment execution actually completed for this one instead.
@@ -1291,9 +1291,9 @@ async def confirm_recovery_action_enactment(
 async def _apply_facility_policy(conn: AsyncConnection, action) -> None:
     """Record an executed action's policy, and its capacity claim, honestly.
 
-    Only `dispatch_promise_hours` writes to `facilities` now (P6):
+    Only `dispatch_promise_hours` writes to `facilities` now:
     backend-owned policy, no physical assumption, applies to future orders
-    only (docs/08 section 10). `capacity_per_hour` used to write here too,
+    only. `capacity_per_hour` used to write here too,
     the instant execution completed -- on any adapter, including the
     simulator. That was optimistic in a way full-charging in
     `committed_work_units` (P5) was not: a written number is believed

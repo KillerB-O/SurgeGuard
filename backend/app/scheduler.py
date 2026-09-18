@@ -226,9 +226,11 @@ class CapacityRamp(BaseModel):
 class SlaThresholds(BaseModel):
     """How much slack separates SAFE / WATCH / AT_RISK / BREACHED.
 
-    Was two frozen module constants applied identically to every facility.
-    A real warehouse with its own promise window has no legal way to say so.
-    The frozen values are these fields' defaults, not a second source of truth.
+    Was two frozen module constants applied identically to every facility,
+    which is the `EventSource`-named-after-the-simulator problem (P1) in a
+    different place: a real warehouse with its own promise window has no
+    legal way to say so. The frozen values are these fields' defaults, not
+    a second source of truth.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -240,9 +242,9 @@ class SlaThresholds(BaseModel):
 class FacilityRiskThresholds(BaseModel):
     """Exposure ratios separating LOW / MEDIUM / HIGH / CRITICAL.
 
-    Was three frozen module constants, same problem as `SlaThresholds` above:
-    a facility's risk appetite is not a property of the code, it is a property
-    of the facility.
+    Was three frozen module constants, same problem as `SlaThresholds`
+    above: a facility's risk appetite is not a property of the code, it is
+    a property of the facility.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -260,14 +262,14 @@ def sla_thresholds(facility: dict) -> SlaThresholds:
     against.
 
     Args:
-        facility: Facility row (uses defaults from 0001 until migration 0021).
+        facility: Facility row, carrying migration 0021's threshold columns.
 
     Returns:
         This facility's own SLA thresholds.
     """
     return SlaThresholds(
-        watch_hours=facility.get("watch_threshold_hours", WATCH_THRESHOLD_HOURS),
-        at_risk_hours=facility.get("at_risk_threshold_hours", AT_RISK_THRESHOLD_HOURS),
+        watch_hours=facility["watch_threshold_hours"],
+        at_risk_hours=facility["at_risk_threshold_hours"],
     )
 
 
@@ -275,15 +277,15 @@ def risk_thresholds(facility: dict) -> FacilityRiskThresholds:
     """Build a facility's surge-risk thresholds from its own configured columns.
 
     Args:
-        facility: Facility row (uses defaults from 0001 until migration 0021).
+        facility: Facility row, carrying migration 0021's threshold columns.
 
     Returns:
         This facility's own surge-risk thresholds.
     """
     return FacilityRiskThresholds(
-        exposure_high_ratio=facility.get("exposure_high_ratio", EXPOSURE_HIGH_RATIO),
-        exposure_critical_ratio=facility.get("exposure_critical_ratio", EXPOSURE_CRITICAL_RATIO),
-        breach_critical_ratio=facility.get("breach_critical_ratio", BREACH_CRITICAL_RATIO),
+        exposure_high_ratio=facility["exposure_high_ratio"],
+        exposure_critical_ratio=facility["exposure_critical_ratio"],
+        breach_critical_ratio=facility["breach_critical_ratio"],
     )
 
 
@@ -558,7 +560,7 @@ def _priority_breakdown(
     Note that under a single facility-wide promise policy, urgency and the aging
     bonus are both linear in the order's age and rank orders identically. The
     aging term becomes an independent anti-starvation signal only once promise
-    windows differ between orders (docs/05 section 5).
+    windows differ between orders.
     """
     hours_until_due = (order.promised_dispatch_at - now).total_seconds() / 3600.0
     age_hours = (now - order.created_at).total_seconds() / 3600.0
