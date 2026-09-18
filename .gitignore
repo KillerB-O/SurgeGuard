@@ -27,3 +27,4 @@ pgdata/
 .claude
 .agents
 
+.DS_Store
