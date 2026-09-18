@@ -16,6 +16,8 @@ dependencies = [
     "alembic>=1.18",
     # Outbound call that hands approved recovery actions to n8n.
     "httpx>=0.27",
+    # Gemini API client for the recovery-plan explanation layer.
+    "google-genai>=1.0",
     # Argon2id password hashing (D-06). Floor verified against live PyPI
     # metadata on 2026-09-10: 0.3.1, released 2026-08-12, actively maintained.
     # The unmaintained, pre-2020 alternative most FastAPI tutorials still

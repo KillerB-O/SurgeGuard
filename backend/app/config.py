@@ -118,6 +118,13 @@ class Settings(BaseSettings):
     demo_user_email: str = "demo@surgeguard.local"
     demo_user_password: str = "SurgeGuardDemo1!"
 
+    # -- Gemini recovery-plan explanation layer. --
+    gemini_api_key: str | None = None
+    gemini_model: str = "gemini-3.8-flash"
+    gemini_timeout_seconds: float = 20.0
+    openrouter_api_key: str | None = None
+    openrouter_model: str = "google/gemini-3.8-flash"
+
     # -- Alerting settings. Consumed by app/alerts/. --
 
     alert_max_attempts: int = 3

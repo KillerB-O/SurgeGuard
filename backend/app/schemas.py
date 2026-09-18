@@ -258,6 +258,21 @@ class RecoveryApprovalResponse(BaseModel):
     status: ActionStatus
 
 
+class RecoveryChatRequest(BaseModel):
+    """Question about an already-computed recovery plan."""
+
+    plan_id: str = Field(min_length=1, max_length=200)
+    question: str = Field(min_length=1, max_length=1000)
+
+
+class RecoveryChatResponse(BaseModel):
+    """Grounded explanation of an already-computed recovery plan."""
+
+    plan_id: str
+    answer: str
+    grounded: bool = True
+
+
 class CapacityCommitmentResponse(BaseModel):
     """What one capacity_delta effect claimed, and whether it held up.
 
