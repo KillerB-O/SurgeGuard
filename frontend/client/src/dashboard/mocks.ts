@@ -23,6 +23,31 @@ import type {
   SurgeRiskLevel,
 } from "@/lib/types";
 
+// --- Recovery chat fixture --------------------------------------------------
+
+/**
+ * Canned answers so the chat panel is usable in mock mode with no backend.
+ * Keyed loosely off question content, not a real model -- good enough to
+ * demo the UI, never a source of truth for plan numbers.
+ */
+export function mockRecoveryChatAnswer(planId: string, question: string): string {
+  const plan = MOCK_PLANS.plans.find((p) => p.plan_id === planId);
+  const lower = question.toLowerCase();
+
+  if (!plan) {
+    return `I don't have a plan called \`${planId}\` to answer against.`;
+  }
+  if (lower.includes("cost") || lower.includes("trade")) {
+    return `**${plan.title}** trades: ${plan.trades ?? "no trade-offs recorded."}`;
+  }
+  return [
+    `**${plan.title}** projects ${plan.projected.at_risk_count} at-risk and ${plan.projected.breached_count} breached orders,`,
+    `moving capacity to ${plan.actions.capacity_per_hour} wu/hr.`,
+    "",
+    "This is a mock answer -- set `VITE_DATA_SOURCE=live` to ask the real assistant.",
+  ].join("\n");
+}
+
 const FACILITY = "WH-01";
 const ANCHOR = new Date("2026-08-15T10:20:00Z");
 

@@ -13,7 +13,7 @@ from app.auth import router as auth
 from app.auth.seed import seed_demo_user
 from app.config import settings
 from app.db import engine
-from app.routers import demo, events, health, reads, simulation
+from app.routers import demo, events, health, reads, recovery_chat, simulation
 
 
 @asynccontextmanager
@@ -59,5 +59,6 @@ app.include_router(auth.router, prefix=settings.api_prefix)
 app.include_router(events.router, prefix=settings.api_prefix)
 app.include_router(reads.router, prefix=settings.api_prefix)
 app.include_router(simulation.router, prefix=settings.api_prefix)
+app.include_router(recovery_chat.router, prefix=settings.api_prefix)
 app.include_router(demo.router, prefix=settings.api_prefix)
 app.include_router(alerts.router, prefix=settings.api_prefix)

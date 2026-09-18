@@ -21,6 +21,7 @@ import {
   mockAlertHistory,
   mockAlertRecipients,
   mockOrders,
+  mockRecoveryChatAnswer,
   mockRemoveAlertRecipient,
   mockSimulation,
 } from "@/dashboard/mocks";
@@ -37,6 +38,7 @@ import type {
   OrdersResponse,
   RecoveryActionResponse,
   RecoveryApprovalResponse,
+  RecoveryChatResponse,
   RecoveryPlansResponse,
   SimulationRequest,
   SimulationResponse,
@@ -286,6 +288,37 @@ export function approveRecoveryPlan(
   return request<RecoveryApprovalResponse>(
     `/recovery-plans/${encodeURIComponent(planId)}/approve?${facilityQuery(facilityId)}&${horizonQuery()}`,
     { method: "POST" },
+  );
+}
+
+/**
+ * Grounded Q&A about one already-computed recovery plan. Stateless on the
+ * backend -- no conversation id, no history kept server-side -- so every
+ * call resends `planId` and the transcript lives entirely in the caller.
+ *
+ * Reuses `horizonQuery()` deliberately rather than taking a horizon param:
+ * a mismatch against the horizon `getRecoveryPlans` used to produce this
+ * `planId` is exactly what makes the backend 404 a plan the operator is
+ * looking straight at.
+ */
+export function askRecoveryChat(
+  planId: string,
+  question: string,
+  facilityId: string = FACILITY_ID,
+): Promise<RecoveryChatResponse> {
+  if (USING_MOCKS) {
+    return delay({
+      plan_id: planId,
+      answer: mockRecoveryChatAnswer(planId, question),
+      grounded: true,
+    });
+  }
+  return request<RecoveryChatResponse>(
+    `/recovery-chat?${facilityQuery(facilityId)}&${horizonQuery()}`,
+    {
+      method: "POST",
+      body: JSON.stringify({ plan_id: planId, question }),
+    },
   );
 }
 

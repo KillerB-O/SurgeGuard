@@ -77,6 +77,10 @@ services:
       # account at every startup, after `migrate` has prepared a fresh volume.
       DEMO_USER_EMAIL: ${DEMO_USER_EMAIL:-demo@surgeguard.local}
       DEMO_USER_PASSWORD: ${DEMO_USER_PASSWORD:-SurgeGuardDemo1!}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:?set GEMINI_API_KEY in .env}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.8-flash}
+      GEMINI_TIMEOUT_SECONDS: ${GEMINI_TIMEOUT_SECONDS:-20}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:?set OPENROUTER_API_KEY in .env}
     # Bound to loopback, NOT 0.0.0.0. A bare "8000:8000" publishes on every
     # interface, so anyone on the same wifi could reach the demo controls --
     # or the database -- by IP. Container-to-container traffic is unaffected:
