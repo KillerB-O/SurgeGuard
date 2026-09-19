@@ -552,10 +552,12 @@ async def get_demand_work_units_per_hour(
             """
             SELECT COALESCE(SUM(work_units), 0)
             FROM orders
-            WHERE facility_id = :facility_id AND created_at >= :since
+            WHERE facility_id = :facility_id
+              AND created_at >= :since
+              AND created_at <= :now
             """
         ),
-        {"facility_id": facility_id, "since": now - DEMAND_WINDOW},
+        {"facility_id": facility_id, "since": now - DEMAND_WINDOW, "now": now},
     )
     total_work_units = float(result.scalar_one())
     return total_work_units / (DEMAND_WINDOW.total_seconds() / 3600.0)

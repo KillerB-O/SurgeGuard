@@ -113,6 +113,40 @@ async def start(rate: float, conn: AsyncConnection) -> ClockState:
     return state
 
 
+async def pin(at: datetime, conn: AsyncConnection) -> ClockState:
+    """Hold simulated time fixed at `at` until the next pin, start, or stop.
+
+    A surge writes each simulated hour in well under a real second, so a
+    running clock cannot follow it; pinning per tick puts "now" on the hour
+    just written, which is what lets the per-hour rates move as it builds.
+
+    Args:
+        at: The simulated instant to hold.
+        conn: Connection the write happens through.
+
+    Returns:
+        The clock state just persisted and cached.
+    """
+    global _cache, _loaded
+    state = ClockState(sim_anchor=at, wall_anchor=datetime.now(UTC), rate=0.0)
+    await conn.execute(
+        text(
+            """
+            INSERT INTO demo_clock (id, sim_anchor, wall_anchor, rate)
+            VALUES (TRUE, :sim_anchor, :wall_anchor, :rate)
+            ON CONFLICT (id) DO UPDATE
+            SET sim_anchor = EXCLUDED.sim_anchor,
+                wall_anchor = EXCLUDED.wall_anchor,
+                rate = EXCLUDED.rate
+            """
+        ),
+        {"sim_anchor": state.sim_anchor, "wall_anchor": state.wall_anchor, "rate": state.rate},
+    )
+    _cache = state
+    _loaded = True
+    return state
+
+
 async def stop(conn: AsyncConnection) -> None:
     """Delete the clock row; the world returns to wall-clock time immediately.
 

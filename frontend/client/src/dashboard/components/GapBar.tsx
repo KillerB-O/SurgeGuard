@@ -1,3 +1,5 @@
+import { useRef } from "react";
+
 import { formatNumber } from "../lib/format";
 
 /**
@@ -12,7 +14,12 @@ export function GapBar({
   demand: number;
   throughput: number;
 }) {
-  const scale = Math.max(demand, throughput) * 1.12 || 1;
+  // Scaling to the current values alone draws only their ratio, so the bars
+  // sat still while both numbers moved together. A high-water mark keeps the
+  // magnitude visible too.
+  const highWater = useRef(0);
+  highWater.current = Math.max(highWater.current, demand, throughput);
+  const scale = highWater.current * 1.12 || 1;
   const pct = (value: number) => `${(value / scale) * 100}%`;
   const gap = demand - throughput;
   const overshoot = Math.max(0, gap);

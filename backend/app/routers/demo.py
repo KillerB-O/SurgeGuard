@@ -16,7 +16,7 @@ this router is the same thing behind a button.
 
 import asyncio
 import logging
-from datetime import datetime, time, timedelta
+from datetime import UTC, datetime, time, timedelta
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
@@ -41,6 +41,11 @@ router = APIRouter(prefix="/demo", tags=["demo"])
 RUN_STATE_TABLES = (
     "recovery_actions",
     "orders",
+    # No foreign key to orders, and the simulator reuses order ids after a
+    # reset, so leftover transitions attach to the new run's orders and inflate
+    # derived throughput several times over.
+    "order_status_transitions",
+    "pending_status_events",
     "processed_events",
     "fulfillment_snapshots",
 )
@@ -54,10 +59,16 @@ RUN_STATE_TABLES = (
 # where there is slack to spare. Breaches start when the run is long enough that
 # the earliest orders have been waiting past their own promise, which is the
 # real thing being modelled: a facility that has been behind since yesterday.
-DEFAULT_SURGE_TICKS = 24
+# Sixteen stops while most predicted misses are still ahead of their promise, so
+# recovery plans have orders left to save; the live run then realises the rest.
+DEFAULT_SURGE_TICKS = 16
 # Ticks are fast now that events are posted over a pooled connection, so this is
 # just enough spacing for the dashboard's poll to show the backlog building.
 SECONDS_BETWEEN_TICKS = 0.5
+# Where the clock sits relative to a surge tick's anchor. Every event in a tick
+# is stamped exactly at the anchor and the rate windows are `>= now - 1h`, so a
+# pin exactly on the anchor would also count the previous tick, an hour back.
+SURGE_CLOCK_LEAD = timedelta(minutes=1)
 
 # How often the live loop drives the simulator, in REAL seconds. Small on
 # purpose: each tick carries only the slice of simulated time that just
@@ -66,6 +77,8 @@ SECONDS_BETWEEN_TICKS = 0.5
 # between -- a slideshow, not a floor.
 LIVE_TICK_SECONDS = 2.0
 DEFAULT_LIVE_SPEED = 60.0
+# Where the live demand wave reaches its peak (simulator Scenario.demand_at).
+SURGE_PEAK_WAVE_HOUR = 4.0
 
 
 class SurgeRequest(BaseModel):
@@ -319,10 +332,16 @@ async def start_live(
     if _state.running or _state.live:
         raise HTTPException(status_code=409, detail="a run is already in progress")
 
+    # Straight after a surge the floor is already at peak demand; starting the
+    # wave from its quiet phase would read as the surge having stopped.
+    wave_offset_hours = SURGE_PEAK_WAVE_HOUR if _state.detail == "surge complete" else 0.0
+
     async with engine.begin() as clock_conn:
         state = await clock.start(request.speed, clock_conn)
 
-    asyncio.create_task(_run_live(simulator, request.speed, state.sim_anchor))
+    asyncio.create_task(
+        _run_live(simulator, request.speed, state.sim_anchor, wave_offset_hours)
+    )
     return DemoStatus(
         enabled=True,
         running=True,
@@ -364,7 +383,9 @@ async def _halt_live() -> None:
         await clock.stop(conn)
 
 
-async def _run_live(simulator: str, speed: float, sim_anchor: datetime) -> None:
+async def _run_live(
+    simulator: str, speed: float, sim_anchor: datetime, wave_offset_hours: float = 0.0
+) -> None:
     """Drive the simulator in small slices of simulated time until stopped.
 
     Each pass covers only the sliver of simulated time that just elapsed, so
@@ -404,7 +425,7 @@ async def _run_live(simulator: str, speed: float, sim_anchor: datetime) -> None:
                 last_tick_at = fired_at
                 body = {
                     "at": plan.at.isoformat(),
-                    "sim_hours_elapsed": plan.sim_hours_elapsed,
+                    "sim_hours_elapsed": plan.sim_hours_elapsed + wave_offset_hours,
                     "duration_hours": plan.duration_hours,
                 }
                 await client.post(f"{simulator}/scenario/run-stage", json=body)
@@ -483,6 +504,7 @@ async def _run_surge(simulator: str, request: SurgeRequest) -> None:
             for _ in range(max(target - stages.index(current["stage"]), 0)):
                 await client.post(f"{simulator}/scenario/next-stage")
 
+            surge_end = datetime.now(UTC)
             for tick in range(1, request.ticks + 1):
                 # Tick 1 describes the hour furthest back, the last tick
                 # describes now. Without this the whole surge lands inside one
@@ -492,9 +514,17 @@ async def _run_surge(simulator: str, request: SurgeRequest) -> None:
                 # genuinely older, so the queue ages and promises fall due:
                 # twelve ticks build a twelve-hour history, not an instant
                 # spike that nothing is yet late for.
-                body = {"hours_ago": request.ticks - tick}
+                anchor = surge_end - timedelta(hours=request.ticks - tick)
+                body = {"at": anchor.isoformat()}
                 await client.post(f"{simulator}/scenario/run-stage", json=body)
                 await client.post(f"{simulator}/scenario/advance-statuses", json=body)
+                # Backdated ticks fall outside the one-hour rate windows of the
+                # wall clock, so the dashboard's demand and throughput sat still
+                # until the last tick. Pinning "now" to the hour just written
+                # lets them move as the surge builds. Pinning only once the
+                # tick is fully ingested keeps a poll from reading half a tick.
+                async with engine.begin() as clock_conn:
+                    await clock.pin(anchor + SURGE_CLOCK_LEAD, clock_conn)
                 _state = _state.model_copy(update={"ticks_done": tick})
                 if tick < request.ticks:
                     await asyncio.sleep(SECONDS_BETWEEN_TICKS)
@@ -505,3 +535,6 @@ async def _run_surge(simulator: str, request: SurgeRequest) -> None:
         _state = _state.model_copy(
             update={"running": False, "detail": f"surge failed: {exc}"}
         )
+    finally:
+        async with engine.begin() as conn:
+            await clock.stop(conn)

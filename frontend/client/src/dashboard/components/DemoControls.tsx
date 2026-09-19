@@ -17,7 +17,7 @@ import { formatClock, formatNumber } from "../lib/format";
  * Anything in `0 < speed <= 600` is accepted by `LiveRequest.speed`, so adding
  * a rate here needs no backend change.
  */
-const LIVE_SPEEDS = [1, 25, 60, 180];
+const LIVE_SPEEDS = [1, 25, 60, 180, 600];
 
 /**
  * Reset, surge, and the continuous live clock, so driving the demo does not
@@ -31,7 +31,7 @@ const LIVE_SPEEDS = [1, 25, 60, 180];
 export function DemoControls() {
   const status = useDemoStatus();
   const queryClient = useQueryClient();
-  const [speed, setSpeed] = useState(60);
+  const [speed, setSpeed] = useState(600);
 
   // Every panel reads from the same backend state, so a reset, a surge, or a
   // live start/stop invalidates all of it rather than guessing which views
@@ -179,7 +179,7 @@ export function DemoControls() {
             ? `Demo control refused: ${error.message}`
             : `Could not reach the simulator: ${(error as Error).message}`
           : running
-            ? "Building; the surge keeps running if you navigate away. Each tick writes an earlier hour, so the per-hour rates settle once it completes."
+            ? "Building; the surge keeps running if you navigate away. The dashboard clock follows each simulated hour as it is written."
             : isLive
               ? "The live clock keeps running if you navigate away."
               : status.data.detail ??

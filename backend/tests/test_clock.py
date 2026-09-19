@@ -152,6 +152,26 @@ def test_stop_restores_wall_clock_time():
     assert before <= result <= after
 
 
+def test_pin_holds_now_fixed_at_the_given_instant():
+    """A pinned clock reports the pinned instant and does not advance."""
+    at = datetime(2026, 1, 1, 9, tzinfo=UTC)
+
+    async def _run() -> tuple[datetime, datetime, datetime]:
+        async with _test_engine.begin() as conn:
+            await clock.pin(at, conn)
+            first = await clock.now(conn)
+            await asyncio.sleep(0.1)
+            second = await clock.now(conn)
+            # A fresh process must read the same pin from the table.
+            clock.invalidate()
+            reloaded = await clock.now(conn)
+            return first, second, reloaded
+
+    first, second, reloaded = asyncio.run(_run())
+
+    assert first == second == reloaded == at
+
+
 def test_state_round_trips_through_a_real_connection():
     """`state` reports the running clock, or None once it is stopped."""
 
