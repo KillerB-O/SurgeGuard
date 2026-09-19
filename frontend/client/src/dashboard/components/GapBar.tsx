@@ -19,9 +19,15 @@ export function GapBar({
   const covered = Math.min(demand, throughput);
 
   return (
-    <section className="panel gap-figure" aria-label="Demand against throughput">
+    <section
+      className="panel gap-figure"
+      data-status={gap > 0 ? "over" : "under"}
+      aria-label="Demand against throughput"
+    >
       <div className="gap-headline">
-        <span className="big num">{formatNumber(Math.abs(gap))}</span>
+        <span key={Math.round(gap)} className="big num ticked">
+          {formatNumber(Math.abs(gap))}
+        </span>
         <span className="unit">
           work units per hour {gap > 0 ? "more than" : "below"} what the floor is
           clearing

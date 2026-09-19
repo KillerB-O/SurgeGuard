@@ -5,7 +5,7 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
 import { FACILITY_ID, USING_MOCKS, getMockScenario, setMockScenario } from "@/lib/api";
-import { useDashboard } from "../lib/queries";
+import { POLL_MS, useDashboard } from "../lib/queries";
 import { TIME_ZONE_LABEL, formatClock, formatNumber } from "../lib/format";
 import { RiskBadge } from "./Badges";
 import { LimelightNav, NavItem } from "./LimelightNav";
@@ -219,7 +219,8 @@ export function AppShell() {
           <div className="strip-item">
             <span className="label">Gap</span>
             <span
-              className="value num"
+              key={gap === null ? "none" : Math.round(gap)}
+              className="value num ticked"
               style={{
                 color:
                   gap !== null && gap > 0 ? "var(--at-risk)" : "var(--safe)",
@@ -233,14 +234,15 @@ export function AppShell() {
 
           <div className="strip-item strip-spacer">
             <span className="label">Risk</span>
-            <span className="value">
+            <span key={data?.risk_level ?? "none"} className="value ticked">
               {data ? <RiskBadge level={data.risk_level} /> : "—"}
             </span>
           </div>
 
           <div className="strip-item">
             <span className="label">Updated</span>
-            <span className="value num" style={{ color: "var(--ink-muted)" }}>
+            <span className="value num" style={{ color: "var(--ink-muted)", display: "flex", alignItems: "center", gap: 7 }}>
+              <span className={`live-dot${data ? ` ${data.risk_level.toLowerCase()}` : ""}`} aria-hidden="true" />
               {data ? `${formatClock(data.generated_at)} ${TIME_ZONE_LABEL}` : "—"}
             </span>
           </div>
@@ -249,6 +251,14 @@ export function AppShell() {
         <main className="content">
           <Outlet />
         </main>
+
+        <footer className="dash-foot">
+          <span className="dash-foot-status">
+            <span className={`live-dot${data ? ` ${data.risk_level.toLowerCase()}` : ""}`} aria-hidden="true" />
+            {data ? `Live · refreshing every ${Math.round(POLL_MS / 1000)}s` : "Reconnecting…"}
+          </span>
+          <span>SurgeGuard · {data?.facility_id ?? FACILITY_ID}</span>
+        </footer>
       </div>
     </div>
     </div>
