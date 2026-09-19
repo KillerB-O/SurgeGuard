@@ -9,6 +9,7 @@ const navItems = [
   { label: "The Gap", href: "#problem" },
   { label: "How it works", href: "#how-it-works" },
   { label: "Recovery", href: "#solutions" },
+  { label: "Plans", href: "#solutions", isPlan: true },
   { label: "Command Centre", href: "#dashboard" },
 ];
 
@@ -26,7 +27,7 @@ function FloatingNav() {
     <header className={`floating-nav ${scrolled ? "is-scrolled" : ""}`}>
       <a href="#top" className="nav-brand"><BrandMark /></a>
       <nav className={`nav-links ${mobileOpen ? "open" : ""}`}>
-        {navItems.map((item) => <a key={item.href} href={item.href} onClick={() => setMobileOpen(false)}>{item.label}</a>)}
+        {navItems.map((item) => <a key={`${item.href}-${item.label}`} className={item.isPlan ? "nav-plan-link" : undefined} href={item.href} onClick={() => setMobileOpen(false)}>{item.label}</a>)}
       </nav>
       {user
         ? <SpinningBorderButton className="nav-auth" href="/dashboard">Open dashboard</SpinningBorderButton>
@@ -81,7 +82,21 @@ export function LandingPage() {
           <div className="feature-grid"><FeatureCard icon={<Radar />} index="01" title="Detect the gap" copy="Continuously compare incoming demand with live fulfillment capacity, by node, zone, and shift." /><FeatureCard icon={<Activity />} index="02" title="Predict the break" copy="Surface the orders, SLAs, and operational constraints most likely to fail next." /><FeatureCard icon={<Zap />} index="03" title="Simulate recovery" copy="Test labor moves, routing changes, and overflow plans before making the call." /></div>
         </section>
 
-        <section id="solutions" className="section-shell content-section solutions-section"><div className="section-heading"><div className="section-kicker"><i /> Recovery paths</div><h2>Choose the move that <span>buys time.</span></h2><p>SurgeGuard turns pressure into a shortlist of actions operators can trust.</p></div><div className="solution-grid"><SolutionCard label="Stabilize" title="Protect the promise" copy="Prioritize high-risk orders and preserve your most valuable customer commitments." icon={<ShieldCheck />} /><SolutionCard label="Rebalance" title="Move capacity" copy="See where labor, inventory, and fulfillment load can shift to close the gap." icon={<BarChart3 />} featured /><SolutionCard label="Simulate" title="Test the recovery" copy="Compare recovery scenarios side by side before the next wave hits." icon={<Gauge />} /></div></section>
+        <section id="solutions" className="section-shell content-section solutions-section business-section">
+          <div className="section-heading business-heading"><div className="section-kicker"><i /> Business plan</div><h2>From operational audit to <span>measurable recovery.</span></h2><p>A low-risk path for small D2C brands to understand fulfillment risk, prove value, and scale into live operational intelligence.</p></div>
+          <div className="business-journey">
+            <BusinessStage number="01" label="Operational snapshot" price="₹9,999" detail="one-time · 1–2 weeks" icon={<Radar />} />
+            <BusinessStage number="02" label="30-day pilot" price="₹14,999" detail="one facility · up to 10,000 orders" icon={<Activity />} />
+            <BusinessStage number="03" label="Prove value" detail="monitor · measure · learn" icon={<BarChart3 />} checkpoint />
+            <BusinessStage number="04" label="Growth" price="₹11,999 / month" detail="up to 3 facilities · 25,000 orders" icon={<ShieldCheck />} recommended />
+            <BusinessStage number="05" label="Annual plan" price="₹74,990 / year" detail="₹6,249 effective monthly" icon={<Layers3 />} />
+          </div>
+          <div className="business-pricing-grid">
+            <BusinessPlanCard label="Operational snapshot" price="₹9,999" cadence="one-time" copy="Find where your fulfillment operation is losing SLA performance." features={["1 facility", "Historical data analysis", "SLA and throughput review", "Capacity bottleneck report"]} />
+            <BusinessPlanCard label="30-day pilot" price="₹14,999" cadence="one-time" copy="Monitor the operation before changing it, with recommendations instead of automatic execution." features={["1 facility", "Up to 10,000 orders", "Live risk monitoring", "What-if simulation", "Weekly performance summary"]} featured />
+            <BusinessPlanCard label="Growth" price="₹11,999" cadence="per month" copy="Turn operational visibility into a repeatable recovery system for a growing D2C brand." features={["Up to 3 facilities", "Up to 25,000 orders/month", "Recovery planning", "Human approval workflow", "API and n8n integrations"]} />
+          </div>
+        </section>
 
         <section id="dashboard" className="section-shell content-section dashboard-section"><div className="section-heading split-heading"><div><div className="section-kicker"><i /> Command centre</div><h2>The operational picture, <span>without the fog.</span></h2></div><p>Built for the moment when a good operator needs one decisive view.</p></div><div className="dashboard-window glass-panel"><div className="window-top"><div className="window-brand"><span className="window-dots"><i /><i /><i /></span><span>surgeguard / command-centre</span></div><span className="live-pill"><span /> LIVE</span></div><div className="dashboard-body"><aside className="dashboard-sidebar"><span className="sidebar-active"><Activity size={15} /> Overview</span><span><Radar size={15} /> Risk map</span><span><BarChart3 size={15} /> Recovery</span><span><Layers3 size={15} /> Network</span></aside><div className="dashboard-main"><div className="dash-header"><div><span className="mono-label">Tuesday / 14:42 UTC</span><h3>Fulfillment health</h3></div><span className="health-badge"><Check size={13} /> Monitoring</span></div><div className="metric-row"><MetricCard value="98.7%" label="SLA health" tone="safe" /><MetricCard value="12.4k" label="Orders tracked" /><MetricCard value="03" label="Active alerts" tone="warning" /></div><div className="dashboard-chart"><div className="chart-header"><span>Demand vs throughput</span><span className="chart-legend"><i /> Demand <i /> Throughput</span></div><svg viewBox="0 0 700 150" preserveAspectRatio="none"><path className="chart-gridline" d="M0 30H700M0 75H700M0 120H700" /><path className="demand-line" d="M0 112 C80 109 110 102 156 98 S216 80 260 88 S318 50 365 62 S424 22 474 46 S536 18 584 31 S650 15 700 17" /><path className="throughput-line" d="M0 124 C90 122 120 120 170 118 S230 107 276 110 S330 102 385 105 S444 97 500 102 S580 92 625 95 S670 88 700 90" /></svg></div></div></div></div></section>
 
@@ -93,4 +108,5 @@ export function LandingPage() {
 }
 
 function FeatureCard({ icon, index, title, copy }: { icon: React.ReactNode; index: string; title: string; copy: string }) { return <article className="feature-card glass-panel"><div className="feature-top"><span className="feature-icon">{icon}</span><span className="feature-index">{index}</span></div><h3>{title}</h3><p>{copy}</p><a href="#dashboard" className="card-link">Inspect signal <ArrowRight size={15} /></a></article>; }
-function SolutionCard({ icon, label, title, copy, featured = false }: { icon: React.ReactNode; label: string; title: string; copy: string; featured?: boolean }) { return <article className={`solution-card glass-panel ${featured ? "is-featured" : ""}`}>{featured && <span className="recommended-badge">Recommended</span>}<span className="solution-cost">{label}</span><div className="solution-icon">{icon}</div><h3>{title}</h3><p>{copy}</p><a href="#dashboard" className="card-link">See the move <ArrowRight size={15} /></a></article>; }
+function BusinessStage({ number, label, price, detail, icon, checkpoint = false, recommended = false }: { number: string; label: string; price?: string; detail: string; icon: React.ReactNode; checkpoint?: boolean; recommended?: boolean }) { return <article className={`business-stage glass-panel ${checkpoint ? "is-checkpoint" : ""} ${recommended ? "is-recommended" : ""}`}><div className="business-stage-top"><span className="business-number">{number}</span><span className="business-state"><i /> {checkpoint ? "Proof checkpoint" : recommended ? "Recommended" : "Live path"}</span></div><div className="business-stage-icon">{icon}</div><h3>{label}</h3>{price && <strong>{price}</strong>}<p>{detail}</p></article>; }
+function BusinessPlanCard({ label, price, cadence, copy, features, featured = false }: { label: string; price: string; cadence: string; copy: string; features: string[]; featured?: boolean }) { return <article className={`business-plan-card glass-panel ${featured ? "is-featured" : ""}`}>{featured && <span className="recommended-badge">Recommended start</span>}<div className="business-plan-meta"><span className="solution-cost">{label}</span><span className="business-live-dot"><i /> {featured ? "Low-risk entry" : "SurgeGuard plan"}</span></div><h3>{price}<small> / {cadence}</small></h3><p>{copy}</p><div className="business-feature-list">{features.map((feature) => <span key={feature}><Check size={13} /> {feature}</span>)}</div></article>; }

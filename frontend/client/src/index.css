@@ -268,3 +268,42 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
 .legal-section li::marker { color: var(--green); }
 .legal-footer { margin-top: auto; }
 @media (max-width: 700px) { .legal-header { padding-top: 20px; } .legal-back { font-size: 10px; } .legal-main { padding: 82px 0 75px; } .legal-hero { margin-bottom: 30px; } .legal-hero h1 { font-size: clamp(37px, 12vw, 58px); } .legal-intro { font-size: 14px; } .legal-document { padding: 24px 20px; } .legal-section + .legal-section { margin-top: 30px; padding-top: 30px; } .legal-section h2 { font-size: 17px; } .legal-section p, .legal-section ul { font-size: 13px; } }
+
+
+/* Business plan / pricing journey */
+.business-section { padding-top: 170px; }
+.business-heading { max-width: 720px; }
+.business-journey { position: relative; display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 18px; }
+.business-journey::before { content: ''; position: absolute; top: 72px; right: 7%; left: 7%; height: 1px; background: linear-gradient(90deg, transparent, rgba(52,211,153,.6), transparent); box-shadow: 0 0 18px rgba(52,211,153,.25); }
+.business-stage { position: relative; z-index: 1; min-height: 230px; padding: 20px 18px; border-radius: 15px; background: linear-gradient(145deg, rgba(12,24,17,.82), rgba(12,18,14,.52)); transition: transform .28s var(--ease-out), border-color .28s ease, box-shadow .28s ease; }
+.business-stage:hover { transform: translateY(-6px); border-color: var(--border-hover); box-shadow: 0 18px 48px rgba(0,0,0,.22), 0 0 26px rgba(52,211,153,.07); }
+.business-stage.is-checkpoint, .business-stage.is-recommended { border-color: rgba(52,211,153,.48); box-shadow: 0 0 32px rgba(52,211,153,.1); }
+.business-stage-top, .business-plan-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.business-number { color: var(--green); font-family: var(--font-mono); font-size: 22px; letter-spacing: -.05em; }
+.business-state, .business-live-dot { display: inline-flex; align-items: center; gap: 5px; color: var(--faint); font-family: var(--font-mono); font-size: 8px; letter-spacing: .06em; text-transform: uppercase; }
+.business-state i, .business-live-dot i { width: 5px; height: 5px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse 2s infinite; }
+.business-stage-icon { display: grid; place-items: center; width: 38px; height: 38px; margin: 24px 0 18px; border: 1px solid rgba(52,211,153,.16); border-radius: 11px; color: var(--green); background: var(--green-dim); }
+.business-stage-icon svg { width: 18px; height: 18px; }
+.business-stage h3 { margin: 0 0 12px; font-size: 16px; letter-spacing: -.03em; }
+.business-stage strong { display: block; color: var(--green); font-family: var(--font-mono); font-size: 14px; font-weight: 500; }
+.business-stage p { margin: 7px 0 0; color: var(--muted); font-family: var(--font-mono); font-size: 9px; line-height: 1.6; }
+.business-pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.business-plan-card { position: relative; display: flex; flex-direction: column; min-height: 315px; padding: 27px 25px; overflow: hidden; border-radius: 18px; transition: transform .28s var(--ease-out), border-color .28s ease, box-shadow .28s ease; }
+.business-plan-card:hover { transform: translateY(-5px); border-color: var(--border-hover); box-shadow: 0 18px 48px rgba(0,0,0,.22); }
+.business-plan-card.is-featured { border-color: rgba(52,211,153,.4); box-shadow: 0 0 36px rgba(52,211,153,.09); }
+.business-plan-card .solution-cost { margin-bottom: 0; }
+.business-plan-card h3 { margin: 24px 0 9px; color: var(--green); font-family: var(--font-mono); font-size: 27px; letter-spacing: -.05em; }
+.business-plan-card h3 small { color: var(--muted); font-size: 10px; font-weight: 400; letter-spacing: 0; }
+.business-plan-card p { min-height: 43px; margin: 0; color: var(--muted); font-size: 13px; line-height: 1.65; }
+.business-feature-list { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 21px; padding-top: 18px; border-top: 1px solid var(--border); }
+.business-feature-list span { display: inline-flex; align-items: center; gap: 5px; padding: 5px 8px; border: 1px solid rgba(52,211,153,.12); border-radius: 999px; color: var(--muted); font-family: var(--font-mono); font-size: 8px; }
+.business-feature-list svg { color: var(--green); flex: 0 0 auto; }
+.business-plan-card .card-link { position: static; margin-top: auto; padding-top: 24px; }
+@media (max-width: 980px) { .business-journey { grid-template-columns: repeat(3, 1fr); } .business-journey::before { display: none; } .business-pricing-grid { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .business-journey { grid-template-columns: 1fr 1fr; } .business-stage { min-height: 205px; } .business-stage h3 { font-size: 14px; } }
+@media (max-width: 430px) { .business-journey { grid-template-columns: 1fr; } }
+
+
+/* Plans intentionally uses the same plain link treatment as the other nav items. */
+.nav-links a.nav-plan-link { color: var(--muted); }
+.nav-links a.nav-plan-link:hover { color: var(--white); }
