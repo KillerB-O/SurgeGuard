@@ -96,7 +96,7 @@ export function CommandCenter() {
       />
 
       <div className="grid-2">
-        <section className="panel">
+        <section className="panel dispatch-panel">
           <div className="panel-title">
             <h2>Dispatch risk</h2>
             <span className="hint">of {formatNumber(pending)} pending orders</span>
@@ -144,7 +144,7 @@ export function CommandCenter() {
           )}
         </section>
 
-        <section className="panel">
+        <section className="panel backlog-panel">
           <div className="panel-title">
             <h2>Backlog</h2>
             <span className="hint">unfinished work in the building</span>
@@ -185,7 +185,7 @@ export function CommandCenter() {
         </section>
       </div>
 
-      <section className="panel">
+      <section className="panel flow-panel">
         <div className="panel-title">
           <h2>Where the work sits</h2>
           <span className="hint">
