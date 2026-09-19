@@ -4,6 +4,7 @@ import { Route, Routes } from "react-router-dom";
 import { ProtectedDashboard } from "@/components/ProtectedDashboard";
 import { AuthPage } from "@/pages/Auth";
 import { LandingPage } from "@/pages/Landing";
+import { PrivacyPolicyPage, TermsAndConditionsPage } from "@/pages/Legal";
 import { NotFoundPage } from "@/pages/NotFound";
 import { ResetPasswordPage } from "@/pages/ResetPassword";
 import { SetNewPasswordPage } from "@/pages/SetNewPassword";
@@ -18,6 +19,8 @@ export default function App() {
     <Routes>
       {/* Public. */}
       <Route path="/" element={<LandingPage />} />
+      <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+      <Route path="/terms-and-conditions" element={<TermsAndConditionsPage />} />
       <Route path="/auth" element={<AuthPage />} />
       <Route path="/login" element={<AuthPage />} />
       <Route path="/signup" element={<AuthPage />} />

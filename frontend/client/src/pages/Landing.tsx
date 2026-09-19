@@ -87,7 +87,7 @@ export function LandingPage() {
 
         <section className="section-shell cta-section"><div className="cta-panel"><div className="section-kicker"><i /> Next shift, clearer</div><h2>Make the gap visible<br /><span>before it makes the decision.</span></h2><p>Bring your operation into focus with SurgeGuard.</p><SpinningBorderButton className="cta-button" href={user ? "/dashboard" : "/auth"}>{user ? "Open the command centre" : "Explore the system"}</SpinningBorderButton></div></section>
       </main>
-      <footer className="site-footer section-shell"><a href="#top"><BrandMark /></a><div className="footer-links"><a href="#problem">The Gap</a><a href="#solutions">Recovery</a><Link to={user ? "/dashboard" : "/auth"}>{user ? "Dashboard" : "Access"}</Link></div><span className="footer-copy">© 2026 SurgeGuard / Intelligent fulfillment operations</span></footer>
+      <footer className="site-footer section-shell"><span className="footer-copy">Copyright © 2026 SurgeGuard. All rights reserved.</span><nav className="footer-links" aria-label="Legal"><Link to="/privacy-policy">Privacy Policy</Link><span className="footer-divider">|</span><Link to="/terms-and-conditions">Terms and Conditions</Link></nav></footer>
     </div>
   );
 }
